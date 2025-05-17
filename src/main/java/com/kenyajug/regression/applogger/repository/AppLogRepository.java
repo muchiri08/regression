@@ -1,4 +1,4 @@
-package com.kenyajug.regression.repository;
+package com.kenyajug.regression.applogger.repository;
 /*
  * MIT License
  *
@@ -22,7 +22,8 @@ package com.kenyajug.regression.repository;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.LogsDataSource;
+import com.kenyajug.regression.common.CrudRepository;
+import com.kenyajug.regression.applogger.model.AppLog;
 import com.kenyajug.regression.utils.DateTimeUtils;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -31,10 +32,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 @Repository
-public non-sealed class LogsDataSourceRepository implements CrudRepository<LogsDataSource> {
+public class AppLogRepository implements CrudRepository<AppLog> {
     private final JdbcClient jdbcClient;
     private final TransactionTemplate transactionTemplate;
-    public LogsDataSourceRepository(JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
+    public AppLogRepository(JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
         this.jdbcClient = jdbcClient;
         this.transactionTemplate = transactionTemplate;
     }
@@ -45,34 +46,34 @@ public non-sealed class LogsDataSourceRepository implements CrudRepository<LogsD
      * @param entity the entity to save (must not be {@code null})
      */
     @Override
-    public void save(LogsDataSource entity) {
+    public void save(AppLog entity) {
         transactionTemplate.executeWithoutResult(status -> {
             var insertSql = """
-                        INSERT INTO logs_data_source (
-                            uuid,
-                            name,
-                            source_type,
-                            application_id,
-                            created_at,
-                            log_file_path
-                        ) VALUES (
-                            :uuid,
-                            :name,
-                            :source_type,
-                            :application_id,
-                            :created_at,
-                            :log_file_path
-                        )
+                         INSERT INTO app_logs (
+                             uuid,
+                             timestamp,
+                             severity,
+                             application_uuid,
+                             log_source,
+                             message
+                         ) VALUES (
+                             :uuid,
+                             :timestamp,
+                             :severity,
+                             :application_uuid,
+                             :log_source,
+                             :message
+                         );
                     """;
-            jdbcClient.sql(insertSql)
+            jdbcClient
+                    .sql(insertSql)
                     .param("uuid", entity.uuid())
-                    .param("name", entity.name())
-                    .param("source_type", entity.sourceType())
-                    .param("application_id", entity.applicationId())
-                    .param("created_at", DateTimeUtils.localDateTimeToUTCTime(entity.createdAt()))
-                    .param("log_file_path", entity.logFilePath())
+                    .param("timestamp", DateTimeUtils.localDateTimeToUTCTime(entity.timestamp()))
+                    .param("severity", entity.severity())
+                    .param("application_uuid", entity.applicationId())
+                    .param("log_source", entity.logSource())
+                    .param("message", entity.message())
                     .update();
-
         });
     }
     /**
@@ -82,44 +83,43 @@ public non-sealed class LogsDataSourceRepository implements CrudRepository<LogsD
      * @return an {@link Optional} containing the found entity, or empty if not found
      */
     @Override
-    public Optional<LogsDataSource> findById(String uuid) {
+    public Optional<AppLog> findById(String uuid) {
         var selectSql = """
-                SELECT * FROM logs_data_source
+                SELECT * FROM app_logs
                 WHERE uuid = :uuid
                 ;
                 """;
         return jdbcClient.sql(selectSql)
-                .param("uuid", uuid)
-                .query((resultSet, row) -> new LogsDataSource(
+                .param("uuid",uuid)
+                .query((resultSet, row) -> new AppLog(
                         resultSet.getString("uuid"),
-                        resultSet.getString("name"),
-                        resultSet.getString("source_type"),
-                        resultSet.getString("application_id"),
-                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at")),
-                        resultSet.getString("log_file_path")
+                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("timestamp")),
+                        resultSet.getString("severity"),
+                        resultSet.getString("application_uuid"),
+                        resultSet.getString("log_source"),
+                        resultSet.getString("message")
                 ))
                 .optional();
     }
-
     /**
      * Retrieves all entities of type {@code T} from the database.
      *
      * @return a list of all entities; never {@code null}, but may be empty
      */
     @Override
-    public List<LogsDataSource> findAll() {
+    public List<AppLog> findAll() {
         var selectSql = """
-                SELECT * FROM logs_data_source
+                SELECT * FROM app_logs
                 ;
                 """;
         return jdbcClient.sql(selectSql)
-                .query((resultSet, row) -> new LogsDataSource(
+                .query((resultSet, row) -> new AppLog(
                         resultSet.getString("uuid"),
-                        resultSet.getString("name"),
-                        resultSet.getString("source_type"),
-                        resultSet.getString("application_id"),
-                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at")),
-                        resultSet.getString("log_file_path")
+                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("timestamp")),
+                        resultSet.getString("severity"),
+                        resultSet.getString("application_uuid"),
+                        resultSet.getString("log_source"),
+                        resultSet.getString("message")
                 ))
                 .list();
     }
@@ -132,12 +132,12 @@ public non-sealed class LogsDataSourceRepository implements CrudRepository<LogsD
     @Override
     public void deleteById(String uuid) {
         var deleteSql = """
-                DELETE FROM logs_data_source
+                DELETE FROM app_logs
                 WHERE
                 uuid = :uuid
                 """;
         jdbcClient.sql(deleteSql)
-                .param("uuid", uuid)
+                .param("uuid",uuid)
                 .update();
     }
     /**
@@ -147,7 +147,7 @@ public non-sealed class LogsDataSourceRepository implements CrudRepository<LogsD
     @Override
     public void deleteAll() {
         var deleteSql = """
-                DELETE FROM logs_data_source;
+                DELETE FROM app_logs;
                 """;
         jdbcClient.sql(deleteSql)
                 .update();
@@ -161,13 +161,13 @@ public non-sealed class LogsDataSourceRepository implements CrudRepository<LogsD
     @Override
     public boolean existsById(String uuid) {
         var countSql = """
-                SELECT COUNT(*) FROM logs_data_source
+                SELECT COUNT(*) FROM app_logs
                 WHERE
                 uuid = :uuid
                 """;
         var count = jdbcClient.sql(countSql)
-                .param("uuid", uuid)
-                .query((resultSet, row) -> resultSet.getLong(1))
+                .param("uuid",uuid)
+                .query((resultSet,row) -> resultSet.getLong(1))
                 .single();
         return count > 0;
     }
@@ -181,44 +181,24 @@ public non-sealed class LogsDataSourceRepository implements CrudRepository<LogsD
      * @throws NoSuchElementException   if no entity with the given {@code uuid} exists in the data source
      */
     @Override
-    public void updateById(String uuid, LogsDataSource entity) throws NoSuchElementException {
+    public void updateById(String uuid, AppLog entity) throws NoSuchElementException {
         var updateSql = """
-                    UPDATE logs_data_source
-                    SET
-                        name = :name,
-                        source_type = :source_type,
-                        application_id = :application_id,
-                        created_at = :created_at,
-                        log_file_path = :log_file_path
-                    WHERE
-                        uuid = :uuid
-                """;
-        jdbcClient.sql(updateSql)
-                .param("name", entity.name())
-                .param("source_type", entity.sourceType())
-                .param("application_id", entity.applicationId())
-                .param("created_at", DateTimeUtils.localDateTimeToUTCTime(entity.createdAt()))
-                .param("log_file_path", entity.logFilePath())
-                .param("uuid", uuid)
-                .update();
-
-    }
-    public List<LogsDataSource> findByApplicationId(String parentAppId) {
-        var selectSql = """
-                SELECT * FROM logs_data_source
-                WHERE application_id = :application_id
+                UPDATE app_logs
+                SET timestamp = :timestamp,
+                    severity = :severity,
+                    application_uuid = :application_uuid,
+                    log_source = :log_source,
+                    message = :message
+                WHERE uuid = :uuid;
                 ;
                 """;
-        return jdbcClient.sql(selectSql)
-                .param("application_id", parentAppId)
-                .query((resultSet, row) -> new LogsDataSource(
-                        resultSet.getString("uuid"),
-                        resultSet.getString("name"),
-                        resultSet.getString("source_type"),
-                        resultSet.getString("application_id"),
-                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at")),
-                        resultSet.getString("log_file_path")
-                ))
-                .list();
+        jdbcClient.sql(updateSql)
+                .param("timestamp",DateTimeUtils.localDateTimeToUTCTime(entity.timestamp()))
+                .param("severity",entity.severity())
+                .param("application_uuid",entity.applicationId())
+                .param("log_source",entity.logSource())
+                .param("message",entity.message())
+                .param("uuid",uuid)
+                .update();
     }
 }

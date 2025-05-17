@@ -1,4 +1,4 @@
-package com.kenyajug.regression.entities;
+package com.kenyajug.regression.applogger.model;
 /*
  * MIT License
  *
@@ -23,12 +23,12 @@ package com.kenyajug.regression.entities;
  * SOFTWARE.
  */
 import java.time.LocalDateTime;
-public record Application(
-       String uuid,
-       String name,
-       String appVersion,
-       String runtimeEnvironment,
-       String owner,
-       LocalDateTime createdAt
+public record AppLog(
+        String uuid,
+        LocalDateTime timestamp,
+        String severity,
+        String applicationId,
+        String logSource,
+        String message
 ) {
 }

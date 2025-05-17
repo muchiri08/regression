@@ -1,4 +1,4 @@
-package com.kenyajug.regression.entities;
+package com.kenyajug.regression.applogger.model;
 /*
  * MIT License
  *
@@ -22,12 +22,10 @@ package com.kenyajug.regression.entities;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import java.time.LocalDateTime;
-public record User(
+public record LogsMetadata(
         String uuid,
-        String username,
-        String password,
-        String roles_list_json,
-        LocalDateTime created_at
+        String logId,
+        String metadataType,
+        String metadataValue
 ) {
 }

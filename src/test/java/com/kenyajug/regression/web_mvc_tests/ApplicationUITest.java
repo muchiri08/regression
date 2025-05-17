@@ -1,4 +1,5 @@
 package com.kenyajug.regression.web_mvc_tests;
+import com.kenyajug.regression.application.Application;
 /*
  * MIT License
  *
@@ -22,12 +23,11 @@ package com.kenyajug.regression.web_mvc_tests;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.controllers.ApplicationController;
-import com.kenyajug.regression.entities.Application;
-import com.kenyajug.regression.entities.User;
-import com.kenyajug.regression.repository.ApplicationsRepository;
-import com.kenyajug.regression.repository.UserRepository;
-import com.kenyajug.regression.resources.ApplicationResource;
+import com.kenyajug.regression.web.controllers.ApplicationController;
+import com.kenyajug.regression.user.User;
+import com.kenyajug.regression.application.ApplicationsRepository;
+import com.kenyajug.regression.user.UserRepository;
+import com.kenyajug.regression.web.resources.ApplicationResource;
 import com.kenyajug.regression.security.SecurityHelper;
 import com.kenyajug.regression.security.SecurityUser;
 import org.junit.jupiter.api.DisplayName;

@@ -1,4 +1,4 @@
-package com.kenyajug.regression.resources;
+package com.kenyajug.regression.user;
 /*
  * MIT License
  *
@@ -22,17 +22,12 @@ package com.kenyajug.regression.resources;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-public record PasswordUpdateResource(
-        @NotEmpty
-        @NotBlank
-        String currentPassword,
-        @NotEmpty
-        @NotBlank
-        String newPassword,
-        @NotEmpty
-        @NotBlank
-        String confirmPassword
+import java.time.LocalDateTime;
+public record User(
+        String uuid,
+        String username,
+        String password,
+        String roles_list_json,
+        LocalDateTime created_at
 ) {
 }

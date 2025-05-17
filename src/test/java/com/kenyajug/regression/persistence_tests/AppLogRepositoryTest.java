@@ -22,8 +22,8 @@ package com.kenyajug.regression.persistence_tests;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.AppLog;
-import com.kenyajug.regression.repository.AppLogRepository;
+import com.kenyajug.regression.applogger.model.AppLog;
+import com.kenyajug.regression.applogger.repository.AppLogRepository;
 import com.kenyajug.regression.utils.DateTimeUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

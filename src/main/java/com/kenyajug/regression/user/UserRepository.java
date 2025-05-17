@@ -1,4 +1,4 @@
-package com.kenyajug.regression.repository;
+package com.kenyajug.regression.user;
 /*
  * MIT License
  *
@@ -22,19 +22,18 @@ package com.kenyajug.regression.repository;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.AppLog;
+import com.kenyajug.regression.common.CrudRepository;
 import com.kenyajug.regression.utils.DateTimeUtils;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 @Repository
-public non-sealed class AppLogRepository implements CrudRepository<AppLog>{
+public class UserRepository implements CrudRepository<User> {
     private final JdbcClient jdbcClient;
     private final TransactionTemplate transactionTemplate;
-    public AppLogRepository(JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
+    public UserRepository(JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
         this.jdbcClient = jdbcClient;
         this.transactionTemplate = transactionTemplate;
     }
@@ -42,39 +41,26 @@ public non-sealed class AppLogRepository implements CrudRepository<AppLog>{
      * Saves the given entity to the database.
      * If the entity already exists (e.g., same ID), it may update the record depending on implementation.
      *
-     * @param entity the entity to save (must not be {@code null})
+     * @param user the entity to save (must not be {@code null})
      */
     @Override
-    public void save(AppLog entity) {
+    public void save(User user) {
         transactionTemplate.executeWithoutResult(status -> {
             var insertSql = """
-                         INSERT INTO app_logs (
-                             uuid,
-                             timestamp,
-                             severity,
-                             application_uuid,
-                             log_source,
-                             message
-                         ) VALUES (
-                             :uuid,
-                             :timestamp,
-                             :severity,
-                             :application_uuid,
-                             :log_source,
-                             :message
-                         );
+                         INSERT INTO users (uuid, username, password, roles_list_json, created_at)
+                         VALUES (:uuid, :username, :password, :roles_list_json, :created_at)
                     """;
             jdbcClient
                     .sql(insertSql)
-                    .param("uuid", entity.uuid())
-                    .param("timestamp", DateTimeUtils.localDateTimeToUTCTime(entity.timestamp()))
-                    .param("severity", entity.severity())
-                    .param("application_uuid", entity.applicationId())
-                    .param("log_source", entity.logSource())
-                    .param("message", entity.message())
+                    .param("uuid", user.uuid())
+                    .param("username", user.username())
+                    .param("password", user.password())
+                    .param("roles_list_json", user.roles_list_json())
+                    .param("created_at", DateTimeUtils.localDateTimeToUTCTime(user.created_at()))
                     .update();
         });
     }
+
     /**
      * Finds an entity by its unique identifier.
      *
@@ -82,21 +68,20 @@ public non-sealed class AppLogRepository implements CrudRepository<AppLog>{
      * @return an {@link Optional} containing the found entity, or empty if not found
      */
     @Override
-    public Optional<AppLog> findById(String uuid) {
+    public Optional<User> findById(String uuid) {
         var selectSql = """
-                SELECT * FROM app_logs
+                SELECT * FROM users
                 WHERE uuid = :uuid
                 ;
                 """;
         return jdbcClient.sql(selectSql)
                 .param("uuid",uuid)
-                .query((resultSet, row) -> new AppLog(
+                .query((resultSet, row) -> new User(
                         resultSet.getString("uuid"),
-                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("timestamp")),
-                        resultSet.getString("severity"),
-                        resultSet.getString("application_uuid"),
-                        resultSet.getString("log_source"),
-                        resultSet.getString("message")
+                        resultSet.getString("username"),
+                        resultSet.getString("password"),
+                        resultSet.getString("roles_list_json"),
+                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
                 ))
                 .optional();
     }
@@ -106,19 +91,17 @@ public non-sealed class AppLogRepository implements CrudRepository<AppLog>{
      * @return a list of all entities; never {@code null}, but may be empty
      */
     @Override
-    public List<AppLog> findAll() {
+    public List<User> findAll() {
         var selectSql = """
-                SELECT * FROM app_logs
-                ;
+                SELECT * FROM users;
                 """;
         return jdbcClient.sql(selectSql)
-                .query((resultSet, row) -> new AppLog(
+                .query((resultSet,row) -> new User(
                         resultSet.getString("uuid"),
-                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("timestamp")),
-                        resultSet.getString("severity"),
-                        resultSet.getString("application_uuid"),
-                        resultSet.getString("log_source"),
-                        resultSet.getString("message")
+                        resultSet.getString("username"),
+                        resultSet.getString("password"),
+                        resultSet.getString("roles_list_json"),
+                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
                 ))
                 .list();
     }
@@ -131,7 +114,7 @@ public non-sealed class AppLogRepository implements CrudRepository<AppLog>{
     @Override
     public void deleteById(String uuid) {
         var deleteSql = """
-                DELETE FROM app_logs
+                DELETE FROM users
                 WHERE
                 uuid = :uuid
                 """;
@@ -146,7 +129,7 @@ public non-sealed class AppLogRepository implements CrudRepository<AppLog>{
     @Override
     public void deleteAll() {
         var deleteSql = """
-                DELETE FROM app_logs;
+                DELETE FROM users;
                 """;
         jdbcClient.sql(deleteSql)
                 .update();
@@ -160,7 +143,7 @@ public non-sealed class AppLogRepository implements CrudRepository<AppLog>{
     @Override
     public boolean existsById(String uuid) {
         var countSql = """
-                SELECT COUNT(*) FROM app_logs
+                SELECT COUNT(*) FROM users
                 WHERE
                 uuid = :uuid
                 """;
@@ -171,33 +154,59 @@ public non-sealed class AppLogRepository implements CrudRepository<AppLog>{
         return count > 0;
     }
     /**
-     * Updates an existing entity identified by the given UUID with the provided new data.
+     * Updates an existing entity identified by the given UUID.
+     * <p>
+     * The specific update behavior should be defined by the implementing class,
+     * as this method does not accept any updated field values directly.
      *
-     * @param uuid   the unique identifier of the entity to update (must not be {@code null})
-     * @param entity the updated entity data to apply (must not be {@code null});
-     *               the UUID field inside the entity is typically ignored in favor of the provided {@code uuid}
-     * @throws IllegalArgumentException if {@code uuid} or {@code entity} is {@code null}
-     * @throws NoSuchElementException   if no entity with the given {@code uuid} exists in the data source
+     * @param uuid the unique identifier of the entity to update (must not be {@code null})
+     * @throws IllegalArgumentException if the UUID is {@code null} or the entity does not exist
      */
     @Override
-    public void updateById(String uuid, AppLog entity) throws NoSuchElementException {
+    public void updateById(String uuid, User user) {
         var updateSql = """
-                UPDATE app_logs
-                SET timestamp = :timestamp,
-                    severity = :severity,
-                    application_uuid = :application_uuid,
-                    log_source = :log_source,
-                    message = :message
-                WHERE uuid = :uuid;
+                UPDATE users
+                SET username = :username,
+                    password = :password,
+                    roles_list_json = :roles_list_json,
+                    created_at = :created_at
+                WHERE uuid = :uuid
                 ;
                 """;
         jdbcClient.sql(updateSql)
-                .param("timestamp",DateTimeUtils.localDateTimeToUTCTime(entity.timestamp()))
-                .param("severity",entity.severity())
-                .param("application_uuid",entity.applicationId())
-                .param("log_source",entity.logSource())
-                .param("message",entity.message())
+                .param("username",user.username())
+                .param("password",user.password())
+                .param("roles_list_json",user.roles_list_json())
+                .param("created_at",DateTimeUtils.localDateTimeToUTCTime(user.created_at()))
                 .param("uuid",uuid)
                 .update();
+    }
+    public Optional<User> findByUsername(String username){
+        var selectSql = """
+                SELECT * FROM users
+                WHERE username = :username
+                ;
+                """;
+        return jdbcClient.sql(selectSql)
+                .param("username",username)
+                .query((resultSet, row) -> new User(
+                        resultSet.getString("uuid"),
+                        resultSet.getString("username"),
+                        resultSet.getString("password"),
+                        resultSet.getString("roles_list_json"),
+                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
+                ))
+                .optional();
+    }
+    public boolean existsByUsername(String username){
+        var selectSql = """
+                SELECT COUNT(*) FROM users
+                WHERE username = :username
+                ;
+                """;
+        return jdbcClient.sql(selectSql)
+                .param("username",username)
+                .query((resultSet, row) -> resultSet.getLong(1))
+                .single() > 0;
     }
 }

@@ -1,4 +1,4 @@
-package com.kenyajug.regression.repository;
+package com.kenyajug.regression.applogger.repository;
 /*
  * MIT License
  *
@@ -22,18 +22,19 @@ package com.kenyajug.regression.repository;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.User;
-import com.kenyajug.regression.utils.DateTimeUtils;
+import com.kenyajug.regression.common.CrudRepository;
+import com.kenyajug.regression.applogger.model.LogsMetadata;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 @Repository
-public non-sealed class UserRepository implements CrudRepository<User> {
+public class LogsMetadataRepository implements CrudRepository<LogsMetadata> {
     private final JdbcClient jdbcClient;
     private final TransactionTemplate transactionTemplate;
-    public UserRepository(JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
+    public LogsMetadataRepository(JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
         this.jdbcClient = jdbcClient;
         this.transactionTemplate = transactionTemplate;
     }
@@ -41,26 +42,34 @@ public non-sealed class UserRepository implements CrudRepository<User> {
      * Saves the given entity to the database.
      * If the entity already exists (e.g., same ID), it may update the record depending on implementation.
      *
-     * @param user the entity to save (must not be {@code null})
+     * @param entity the entity to save (must not be {@code null})
      */
     @Override
-    public void save(User user) {
+    public void save(LogsMetadata entity) {
         transactionTemplate.executeWithoutResult(status -> {
             var insertSql = """
-                         INSERT INTO users (uuid, username, password, roles_list_json, created_at)
-                         VALUES (:uuid, :username, :password, :roles_list_json, :created_at)
-                    """;
+                 INSERT INTO logs_metadata (
+                     uuid,
+                     log_uuid,
+                     metadata_type,
+                     metadata_value
+                 ) VALUES (
+                     :uuid,
+                     :log_uuid,
+                     :metadata_type,
+                     :metadata_value
+                 );
+                 
+                 """;
             jdbcClient
                     .sql(insertSql)
-                    .param("uuid", user.uuid())
-                    .param("username", user.username())
-                    .param("password", user.password())
-                    .param("roles_list_json", user.roles_list_json())
-                    .param("created_at", DateTimeUtils.localDateTimeToUTCTime(user.created_at()))
+                    .param("uuid", entity.uuid())
+                    .param("log_uuid", entity.logId())
+                    .param("metadata_type", entity.metadataType())
+                    .param("metadata_value", entity.metadataValue())
                     .update();
         });
     }
-
     /**
      * Finds an entity by its unique identifier.
      *
@@ -68,20 +77,19 @@ public non-sealed class UserRepository implements CrudRepository<User> {
      * @return an {@link Optional} containing the found entity, or empty if not found
      */
     @Override
-    public Optional<User> findById(String uuid) {
+    public Optional<LogsMetadata> findById(String uuid) {
         var selectSql = """
-                SELECT * FROM users
+                SELECT * FROM logs_metadata
                 WHERE uuid = :uuid
                 ;
                 """;
         return jdbcClient.sql(selectSql)
                 .param("uuid",uuid)
-                .query((resultSet, row) -> new User(
+                .query((resultSet, row) -> new LogsMetadata(
                         resultSet.getString("uuid"),
-                        resultSet.getString("username"),
-                        resultSet.getString("password"),
-                        resultSet.getString("roles_list_json"),
-                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
+                        resultSet.getString("log_uuid"),
+                        resultSet.getString("metadata_type"),
+                        resultSet.getString("metadata_value")
                 ))
                 .optional();
     }
@@ -91,17 +99,17 @@ public non-sealed class UserRepository implements CrudRepository<User> {
      * @return a list of all entities; never {@code null}, but may be empty
      */
     @Override
-    public List<User> findAll() {
+    public List<LogsMetadata> findAll() {
         var selectSql = """
-                SELECT * FROM users;
+                SELECT * FROM logs_metadata
+                ;
                 """;
         return jdbcClient.sql(selectSql)
-                .query((resultSet,row) -> new User(
+                .query((resultSet, row) -> new LogsMetadata(
                         resultSet.getString("uuid"),
-                        resultSet.getString("username"),
-                        resultSet.getString("password"),
-                        resultSet.getString("roles_list_json"),
-                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
+                        resultSet.getString("log_uuid"),
+                        resultSet.getString("metadata_type"),
+                        resultSet.getString("metadata_value")
                 ))
                 .list();
     }
@@ -114,7 +122,7 @@ public non-sealed class UserRepository implements CrudRepository<User> {
     @Override
     public void deleteById(String uuid) {
         var deleteSql = """
-                DELETE FROM users
+                DELETE FROM logs_metadata
                 WHERE
                 uuid = :uuid
                 """;
@@ -129,7 +137,7 @@ public non-sealed class UserRepository implements CrudRepository<User> {
     @Override
     public void deleteAll() {
         var deleteSql = """
-                DELETE FROM users;
+                DELETE FROM logs_metadata;
                 """;
         jdbcClient.sql(deleteSql)
                 .update();
@@ -143,7 +151,7 @@ public non-sealed class UserRepository implements CrudRepository<User> {
     @Override
     public boolean existsById(String uuid) {
         var countSql = """
-                SELECT COUNT(*) FROM users
+                SELECT COUNT(*) FROM logs_metadata
                 WHERE
                 uuid = :uuid
                 """;
@@ -154,59 +162,45 @@ public non-sealed class UserRepository implements CrudRepository<User> {
         return count > 0;
     }
     /**
-     * Updates an existing entity identified by the given UUID.
-     * <p>
-     * The specific update behavior should be defined by the implementing class,
-     * as this method does not accept any updated field values directly.
+     * Updates an existing entity identified by the given UUID with the provided new data.
      *
-     * @param uuid the unique identifier of the entity to update (must not be {@code null})
-     * @throws IllegalArgumentException if the UUID is {@code null} or the entity does not exist
+     * @param uuid   the unique identifier of the entity to update (must not be {@code null})
+     * @param entity the updated entity data to apply (must not be {@code null});
+     *               the UUID field inside the entity is typically ignored in favor of the provided {@code uuid}
+     * @throws IllegalArgumentException if {@code uuid} or {@code entity} is {@code null}
+     * @throws NoSuchElementException   if no entity with the given {@code uuid} exists in the data source
      */
     @Override
-    public void updateById(String uuid, User user) {
+    public void updateById(String uuid, LogsMetadata entity) throws NoSuchElementException {
         var updateSql = """
-                UPDATE users
-                SET username = :username,
-                    password = :password,
-                    roles_list_json = :roles_list_json,
-                    created_at = :created_at
-                WHERE uuid = :uuid
+                UPDATE logs_metadata
+                SET log_uuid = :log_uuid,
+                    metadata_type = :metadata_type,
+                    metadata_value = :metadata_value
+                WHERE uuid = :uuid;
                 ;
                 """;
         jdbcClient.sql(updateSql)
-                .param("username",user.username())
-                .param("password",user.password())
-                .param("roles_list_json",user.roles_list_json())
-                .param("created_at",DateTimeUtils.localDateTimeToUTCTime(user.created_at()))
+                .param("log_uuid", entity.logId())
+                .param("metadata_type", entity.metadataType())
+                .param("metadata_value", entity.metadataValue())
                 .param("uuid",uuid)
                 .update();
     }
-    public Optional<User> findByUsername(String username){
+    public List<LogsMetadata> findByRootLogId(String parentLogId) {
         var selectSql = """
-                SELECT * FROM users
-                WHERE username = :username
+                SELECT * FROM logs_metadata
+                WHERE log_uuid = :log_uuid
                 ;
                 """;
         return jdbcClient.sql(selectSql)
-                .param("username",username)
-                .query((resultSet, row) -> new User(
+                .param("log_uuid",parentLogId)
+                .query((resultSet, row) -> new LogsMetadata(
                         resultSet.getString("uuid"),
-                        resultSet.getString("username"),
-                        resultSet.getString("password"),
-                        resultSet.getString("roles_list_json"),
-                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
+                        resultSet.getString("log_uuid"),
+                        resultSet.getString("metadata_type"),
+                        resultSet.getString("metadata_value")
                 ))
-                .optional();
-    }
-    public boolean existsByUsername(String username){
-        var selectSql = """
-                SELECT COUNT(*) FROM users
-                WHERE username = :username
-                ;
-                """;
-        return jdbcClient.sql(selectSql)
-                .param("username",username)
-                .query((resultSet, row) -> resultSet.getLong(1))
-                .single() > 0;
+                .list();
     }
 }

@@ -1,4 +1,4 @@
-package com.kenyajug.regression.controllers;
+package com.kenyajug.regression.web.controllers;
 /*
  * MIT License
  *
@@ -22,9 +22,9 @@ package com.kenyajug.regression.controllers;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.User;
-import com.kenyajug.regression.repository.UserRepository;
-import com.kenyajug.regression.resources.PasswordUpdateResource;
+import com.kenyajug.regression.user.User;
+import com.kenyajug.regression.user.UserRepository;
+import com.kenyajug.regression.web.resources.PasswordUpdateResource;
 import jakarta.validation.Valid;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;

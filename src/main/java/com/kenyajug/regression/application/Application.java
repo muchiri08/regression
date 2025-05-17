@@ -1,4 +1,4 @@
-package com.kenyajug.regression.entities;
+package com.kenyajug.regression.application;
 /*
  * MIT License
  *
@@ -22,10 +22,13 @@ package com.kenyajug.regression.entities;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-public record LogsMetadata(
-        String uuid,
-        String logId,
-        String metadataType,
-        String metadataValue
+import java.time.LocalDateTime;
+public record Application(
+       String uuid,
+       String name,
+       String appVersion,
+       String runtimeEnvironment,
+       String owner,
+       LocalDateTime createdAt
 ) {
 }

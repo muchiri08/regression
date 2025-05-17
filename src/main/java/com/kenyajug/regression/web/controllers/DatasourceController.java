@@ -1,4 +1,4 @@
-package com.kenyajug.regression.controllers;
+package com.kenyajug.regression.web.controllers;
 /*
  * MIT License
  *
@@ -22,33 +22,54 @@ package com.kenyajug.regression.controllers;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.repository.ApplicationsRepository;
-import com.kenyajug.regression.repository.LogsDataSourceRepository;
-import com.kenyajug.regression.repository.UserRepository;
+import com.kenyajug.regression.applogger.model.LogsDataSource;
+import com.kenyajug.regression.application.ApplicationsRepository;
+import com.kenyajug.regression.applogger.repository.LogsDataSourceRepository;
+import com.kenyajug.regression.user.UserRepository;
 import com.kenyajug.regression.security.SecurityHelper;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import java.time.LocalDateTime;
+import java.util.UUID;
 @Controller
-public class DashboardController {
+public class DatasourceController {
+    private final ApplicationsRepository applicationsRepository;
     private final UserRepository userRepository;
     private final SecurityHelper securityHelper;
-    private final ApplicationsRepository applicationsRepository;
     private final LogsDataSourceRepository logsDataSourceRepository;
-    public DashboardController(UserRepository userRepository, SecurityHelper securityHelper, ApplicationsRepository applicationsRepository, LogsDataSourceRepository logsDataSourceRepository) {
+    public DatasourceController(ApplicationsRepository applicationsRepository, UserRepository userRepository, SecurityHelper securityHelper, LogsDataSourceRepository logsDataSourceRepository) {
+        this.applicationsRepository = applicationsRepository;
         this.userRepository = userRepository;
         this.securityHelper = securityHelper;
-        this.applicationsRepository = applicationsRepository;
         this.logsDataSourceRepository = logsDataSourceRepository;
     }
-    @GetMapping("/")
-    public String dashboard(Model model){
+    @GetMapping("/add/data/source")
+    public String datasourceForm(Model model) {
+        var emptyDateSource = new LogsDataSource(UUID.randomUUID().toString(),"","","", LocalDateTime.now(),"");
         var principal = securityHelper.findAuthenticatedUser();
         var user = userRepository.findByUsername(principal.getUsername()).orElseThrow(() -> new SecurityException("Invalid session, current user is not authenticated"));
         var apps = applicationsRepository.findByOwner(user);
+        model.addAttribute("datasource",emptyDateSource);
+        model.addAttribute("applications",apps);
+        return "data-source-form";
+    }
+    @PostMapping("/add/data/source")
+    public String saveNewDataSource(@Valid @ModelAttribute("datasource") LogsDataSource logsDataSource,
+                                    BindingResult bindingResult) {
+        if (bindingResult.hasErrors())
+            return "data-source-form";
+        logsDataSourceRepository.save(logsDataSource);
+        return "redirect:/";
+    }
+    @GetMapping("/data/sources")
+    public String listDataSources(Model model){
         var datasourceList = logsDataSourceRepository.findAll();
-        model.addAttribute("apps",apps);
         model.addAttribute("logsDatasourceList",datasourceList);
-        return "dashboard";
+        return "datasource-list";
     }
 }

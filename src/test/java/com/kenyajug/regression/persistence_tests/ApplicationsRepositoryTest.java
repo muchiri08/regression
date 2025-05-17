@@ -22,12 +22,11 @@ package com.kenyajug.regression.persistence_tests;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.Application;
-import com.kenyajug.regression.entities.User;
-import com.kenyajug.regression.repository.ApplicationsRepository;
+import com.kenyajug.regression.application.Application;
+import com.kenyajug.regression.user.User;
+import com.kenyajug.regression.application.ApplicationsRepository;
 import com.kenyajug.regression.utils.DateTimeUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

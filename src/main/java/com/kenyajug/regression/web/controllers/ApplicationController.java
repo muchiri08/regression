@@ -1,4 +1,4 @@
-package com.kenyajug.regression.controllers;
+package com.kenyajug.regression.web.controllers;
 /*
  * MIT License
  *
@@ -23,10 +23,10 @@ package com.kenyajug.regression.controllers;
  * SOFTWARE.
  *
  */
-import com.kenyajug.regression.entities.Application;
-import com.kenyajug.regression.repository.ApplicationsRepository;
-import com.kenyajug.regression.repository.UserRepository;
-import com.kenyajug.regression.resources.ApplicationResource;
+import com.kenyajug.regression.application.Application;
+import com.kenyajug.regression.application.ApplicationsRepository;
+import com.kenyajug.regression.user.UserRepository;
+import com.kenyajug.regression.web.resources.ApplicationResource;
 import com.kenyajug.regression.security.SecurityHelper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

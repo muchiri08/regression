@@ -22,8 +22,8 @@ package com.kenyajug.regression.persistence_tests;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.User;
-import com.kenyajug.regression.repository.UserRepository;
+import com.kenyajug.regression.user.User;
+import com.kenyajug.regression.user.UserRepository;
 import com.kenyajug.regression.utils.DateTimeUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

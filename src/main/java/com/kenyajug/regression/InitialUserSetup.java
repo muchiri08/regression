@@ -22,8 +22,8 @@ package com.kenyajug.regression;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.User;
-import com.kenyajug.regression.repository.UserRepository;
+import com.kenyajug.regression.user.User;
+import com.kenyajug.regression.user.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;

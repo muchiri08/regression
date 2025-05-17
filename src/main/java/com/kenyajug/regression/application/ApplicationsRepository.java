@@ -1,4 +1,4 @@
-package com.kenyajug.regression.repository;
+package com.kenyajug.regression.application;
 /*
  * MIT License
  *
@@ -22,7 +22,9 @@ package com.kenyajug.regression.repository;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.entities.LogsMetadata;
+import com.kenyajug.regression.user.User;
+import com.kenyajug.regression.common.CrudRepository;
+import com.kenyajug.regression.utils.DateTimeUtils;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -30,10 +32,10 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 @Repository
-public non-sealed class LogsMetadataRepository implements CrudRepository<LogsMetadata>{
+public class ApplicationsRepository implements CrudRepository<Application> {
     private final JdbcClient jdbcClient;
     private final TransactionTemplate transactionTemplate;
-    public LogsMetadataRepository(JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
+    public ApplicationsRepository(JdbcClient jdbcClient, TransactionTemplate transactionTemplate) {
         this.jdbcClient = jdbcClient;
         this.transactionTemplate = transactionTemplate;
     }
@@ -44,31 +46,38 @@ public non-sealed class LogsMetadataRepository implements CrudRepository<LogsMet
      * @param entity the entity to save (must not be {@code null})
      */
     @Override
-    public void save(LogsMetadata entity) {
+    public void save(Application entity) {
         transactionTemplate.executeWithoutResult(status -> {
             var insertSql = """
-                 INSERT INTO logs_metadata (
-                     uuid,
-                     log_uuid,
-                     metadata_type,
-                     metadata_value
-                 ) VALUES (
-                     :uuid,
-                     :log_uuid,
-                     :metadata_type,
-                     :metadata_value
-                 );
-                 
-                 """;
+                         INSERT INTO applications (
+                             uuid,
+                             name,
+                             app_version,
+                             runtime_environment,
+                             owner_uuid,
+                             created_at
+                         ) VALUES (
+                             :uuid,
+                             :name,
+                             :app_version,
+                             :runtime_environment,
+                             :owner_uuid,
+                             :created_at
+                         );
+                    
+                    """;
             jdbcClient
                     .sql(insertSql)
                     .param("uuid", entity.uuid())
-                    .param("log_uuid", entity.logId())
-                    .param("metadata_type", entity.metadataType())
-                    .param("metadata_value", entity.metadataValue())
+                    .param("name", entity.name())
+                    .param("app_version", entity.appVersion())
+                    .param("runtime_environment", entity.runtimeEnvironment())
+                    .param("owner_uuid", entity.owner())
+                    .param("created_at", DateTimeUtils.localDateTimeToUTCTime(entity.createdAt()))
                     .update();
         });
     }
+
     /**
      * Finds an entity by its unique identifier.
      *
@@ -76,19 +85,21 @@ public non-sealed class LogsMetadataRepository implements CrudRepository<LogsMet
      * @return an {@link Optional} containing the found entity, or empty if not found
      */
     @Override
-    public Optional<LogsMetadata> findById(String uuid) {
+    public Optional<Application> findById(String uuid) {
         var selectSql = """
-                SELECT * FROM logs_metadata
+                SELECT * FROM applications
                 WHERE uuid = :uuid
                 ;
                 """;
         return jdbcClient.sql(selectSql)
                 .param("uuid",uuid)
-                .query((resultSet, row) -> new LogsMetadata(
+                .query((resultSet, row) -> new Application(
                         resultSet.getString("uuid"),
-                        resultSet.getString("log_uuid"),
-                        resultSet.getString("metadata_type"),
-                        resultSet.getString("metadata_value")
+                        resultSet.getString("name"),
+                        resultSet.getString("app_version"),
+                        resultSet.getString("runtime_environment"),
+                        resultSet.getString("owner_uuid"),
+                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
                 ))
                 .optional();
     }
@@ -98,20 +109,23 @@ public non-sealed class LogsMetadataRepository implements CrudRepository<LogsMet
      * @return a list of all entities; never {@code null}, but may be empty
      */
     @Override
-    public List<LogsMetadata> findAll() {
+    public List<Application> findAll() {
         var selectSql = """
-                SELECT * FROM logs_metadata
+                SELECT * FROM applications
                 ;
                 """;
         return jdbcClient.sql(selectSql)
-                .query((resultSet, row) -> new LogsMetadata(
+                .query((resultSet, row) -> new Application(
                         resultSet.getString("uuid"),
-                        resultSet.getString("log_uuid"),
-                        resultSet.getString("metadata_type"),
-                        resultSet.getString("metadata_value")
+                        resultSet.getString("name"),
+                        resultSet.getString("app_version"),
+                        resultSet.getString("runtime_environment"),
+                        resultSet.getString("owner_uuid"),
+                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
                 ))
                 .list();
     }
+
     /**
      * Deletes the entity with the specified identifier from the database.
      * If no such entity exists, the operation is silently ignored.
@@ -121,7 +135,7 @@ public non-sealed class LogsMetadataRepository implements CrudRepository<LogsMet
     @Override
     public void deleteById(String uuid) {
         var deleteSql = """
-                DELETE FROM logs_metadata
+                DELETE FROM applications
                 WHERE
                 uuid = :uuid
                 """;
@@ -136,11 +150,12 @@ public non-sealed class LogsMetadataRepository implements CrudRepository<LogsMet
     @Override
     public void deleteAll() {
         var deleteSql = """
-                DELETE FROM logs_metadata;
+                DELETE FROM applications;
                 """;
         jdbcClient.sql(deleteSql)
                 .update();
     }
+
     /**
      * Checks whether an entity with the given unique identifier exists in the data source.
      *
@@ -150,7 +165,7 @@ public non-sealed class LogsMetadataRepository implements CrudRepository<LogsMet
     @Override
     public boolean existsById(String uuid) {
         var countSql = """
-                SELECT COUNT(*) FROM logs_metadata
+                SELECT COUNT(*) FROM applications
                 WHERE
                 uuid = :uuid
                 """;
@@ -170,35 +185,42 @@ public non-sealed class LogsMetadataRepository implements CrudRepository<LogsMet
      * @throws NoSuchElementException   if no entity with the given {@code uuid} exists in the data source
      */
     @Override
-    public void updateById(String uuid, LogsMetadata entity) throws NoSuchElementException {
+    public void updateById(String uuid, Application entity) throws NoSuchElementException {
         var updateSql = """
-                UPDATE logs_metadata
-                SET log_uuid = :log_uuid,
-                    metadata_type = :metadata_type,
-                    metadata_value = :metadata_value
-                WHERE uuid = :uuid;
+                UPDATE applications
+                SET
+                 name = :name,
+                 app_version = :app_version,
+                 runtime_environment = :runtime_environment,
+                 owner_uuid = :owner_uuid,
+                 created_at = :created_at
+                WHERE uuid = :uuid
                 ;
                 """;
         jdbcClient.sql(updateSql)
-                .param("log_uuid", entity.logId())
-                .param("metadata_type", entity.metadataType())
-                .param("metadata_value", entity.metadataValue())
+                .param("name",entity.name())
+                .param("app_version",entity.appVersion())
+                .param("runtime_environment",entity.runtimeEnvironment())
+                .param("owner_uuid",entity.owner())
+                .param("created_at",DateTimeUtils.localDateTimeToUTCTime(entity.createdAt()))
                 .param("uuid",uuid)
                 .update();
     }
-    public List<LogsMetadata> findByRootLogId(String parentLogId) {
+    public List<Application> findByOwner(User owner) {
         var selectSql = """
-                SELECT * FROM logs_metadata
-                WHERE log_uuid = :log_uuid
+                SELECT * FROM applications
+                WHERE owner_uuid = :owner_uuid
                 ;
                 """;
         return jdbcClient.sql(selectSql)
-                .param("log_uuid",parentLogId)
-                .query((resultSet, row) -> new LogsMetadata(
+                .param("owner_uuid",owner.uuid())
+                .query((resultSet, row) -> new Application(
                         resultSet.getString("uuid"),
-                        resultSet.getString("log_uuid"),
-                        resultSet.getString("metadata_type"),
-                        resultSet.getString("metadata_value")
+                        resultSet.getString("name"),
+                        resultSet.getString("app_version"),
+                        resultSet.getString("runtime_environment"),
+                        resultSet.getString("owner_uuid"),
+                        DateTimeUtils.convertZonedUTCTimeStringToLocalDateTime(resultSet.getString("created_at"))
                 ))
                 .list();
     }

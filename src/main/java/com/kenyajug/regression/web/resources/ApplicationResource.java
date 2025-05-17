@@ -1,4 +1,4 @@
-package com.kenyajug.regression.entities;
+package com.kenyajug.regression.web.resources;
 /*
  * MIT License
  *
@@ -23,23 +23,18 @@ package com.kenyajug.regression.entities;
  * SOFTWARE.
  */
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
-import java.time.LocalDateTime;
-public record LogsDataSource(
+public record ApplicationResource(
+        @NotEmpty
         @Pattern(
                 regexp = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
-                message = "Invalid log id format"
+                message = "Invalid UUID format"
         )
         String uuid,
-        @NotBlank(message = "Data source name cannot be left blank")
+        @NotBlank(message = "Application name must contain only letters or numbers")
         String name,
-        @NotBlank(message = "Data source type cannot be empty")
-        String sourceType,//Can be local,API,Form
-        @NotBlank(message = "Missing appliation id error")
-        String applicationId,
-        @NotNull(message = "Failed to determine log data source timestamps, internal error 😕")
-        LocalDateTime createdAt,
-        String logFilePath
+        @NotBlank(message = "Runtime environment must contain only letters or numbers")
+        String runtimeEnvironment
 ) {
 }

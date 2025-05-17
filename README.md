@@ -248,17 +248,27 @@ N/A - Documentation changes only
 
 
 
+
+
 <!-- coverage start -->
 ## 📊 Code Coverage Report
 
-**Overall Coverage: 100.00% ✅**
+**Overall Coverage: 0% ⚠️**
 
-| Metric      | Covered | Missed | Total | Coverage  |
-|-------------|---------|--------|-------|-----------|
-| INSTRUCTION | 1847    | 0      | 1847  | 100.00% ✅ |
-| LINE        | 512     | 0      | 512   | 100.00% ✅ |
-| BRANCH      | 24      | 0      | 24    | 100.00% ✅ |
-| METHOD      | 129     | 0      | 129   | 100.00% ✅ |
-| CLASS       | 24      | 0      | 24    | 100.00% ✅ |
-| COMPLEXITY  | 141     | 0      | 141   | 100.00% ✅ |
+| Metric      | Covered | Missed | Total | Coverage |
+|-------------|---------|--------|--------|----------|
+| INSTRUCTION |  |  | 0 | 0% ⚠️ |
+| LINE |  |  | 0 | 0% ⚠️ |
+| BRANCH |  |  | 0 | 0% ⚠️ |
+| METHOD |  |  | 0 | 0% ⚠️ |
+| CLASS |  |  | 0 | 0% ⚠️ |
+| COMPLEXITY |  |  | 0 | 0% ⚠️ |
+
+### 🚨 Least Tested Elements (coverage below 50%)
+- INSTRUCTION: 0%
+- LINE: 0%
+- BRANCH: 0%
+- METHOD: 0%
+- CLASS: 0%
+- COMPLEXITY: 0%
 <!-- coverage end -->

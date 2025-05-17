@@ -23,8 +23,8 @@ package com.kenyajug.regression.security_tests;
  * SOFTWARE.
  */
 import com.kenyajug.regression.InitialUserSetup;
-import com.kenyajug.regression.entities.User;
-import com.kenyajug.regression.repository.UserRepository;
+import com.kenyajug.regression.user.User;
+import com.kenyajug.regression.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

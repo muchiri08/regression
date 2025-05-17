@@ -22,10 +22,10 @@ package com.kenyajug.regression.web_mvc_tests;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import com.kenyajug.regression.controllers.UserController;
-import com.kenyajug.regression.entities.User;
-import com.kenyajug.regression.repository.UserRepository;
-import com.kenyajug.regression.resources.PasswordUpdateResource;
+import com.kenyajug.regression.web.controllers.UserController;
+import com.kenyajug.regression.user.User;
+import com.kenyajug.regression.user.UserRepository;
+import com.kenyajug.regression.web.resources.PasswordUpdateResource;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
